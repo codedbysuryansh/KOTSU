@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>KOTSU phone</title>
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  body { background: #15191E; color: #F4F5F2; min-height: 100%; }
+  .wrap { padding: calc(14px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 14px; }
+  .big { font-size: 22px; }
+  .start { font-size: 26px; padding: 18px; border-radius: 14px; border: none; background: #D9480F; color: #fff; width: 100%; }
+  .seg { display: flex; gap: 8px; }
+  .seg button { flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #3A424E; background: #262C35; color: #F4F5F2; font-size: 17px; }
+  .seg button[aria-pressed="true"] { background: #F4F5F2; color: #15191E; }
+  .result { border-radius: 16px; padding: 18px; background: #262C35; min-height: 150px; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+  .result .w { font-size: 64px; font-weight: 800; line-height: 1; }
+  .result.pass { background: #1E7F4F; }
+  .result.fail { background: #9C2F26; }
+  .meter { height: 18px; border-radius: 9px; background: #262C35; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; background: #F2A36B; transition: width 60ms linear; }
+  #draw { height: 52vh; border-radius: 14px; background: #F7F6F1; touch-action: none; display: none; }
+  .note { font-size: 14px; color: #B8BEC6; }
+  input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #3A424E; background: #262C35; color: #F4F5F2; font-size: 17px; }
+  label { font-size: 13px; color: #B8BEC6; display: flex; flex-direction: column; gap: 4px; }
+  .lang { display: flex; flex-direction: row; gap: 8px; align-items: center; font-size: 15px; color: #D6DAE0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row" style="justify-content:space-between"><b class="big">KOTSU コツ · phone</b><span class="status" id="conn" style="color:#B8BEC6">connecting…</span></div>
+  <label>This phone’s name<input id="name" autocomplete="off"></label>
+  <div class="seg" role="group" aria-label="Mode">
+    <button type="button" id="m-tool" aria-pressed="true">Tool (motion)</button>
+    <button type="button" id="m-draw" aria-pressed="false">Draw (finger)</button>
+  </div>
+  <label class="lang"><input type="checkbox" id="mic" style="width:auto"> Also listen to the contact sound (microphone)</label>
+  <button class="start" id="start" type="button">Start</button>
+  <div class="note" id="hint">Hold the phone like the tool (a plane, a file, a brush) and make one stroke at a time across the table. Pause between strokes.</div>
+  <div class="meter" aria-label="Motion level"><i id="meter"></i></div>
+  <canvas id="draw" aria-label="Drawing area"></canvas>
+  <div class="result" id="result"><div class="note">Strokes will appear here.</div></div>
+  <div class="note" id="diag"></div>
+</div>
+<script src="/static/common.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  let name = null; try { name = localStorage.getItem("kotsu-phone"); } catch (e) {}
+  if (!name) { name = "phone-" + Math.random().toString(36).slice(2, 5); try { localStorage.setItem("kotsu-phone", name); } catch (e) {} }
+  $("name").value = name;
+  $("name").addEventListener("change", () => { name = $("name").value.trim().replace(/\s+/g, "-") || name; if (!name.startsWith("phone-")) name = "phone-" + name; $("name").value = name; try { localStorage.setItem("kotsu-phone", name); } catch (e) {} sock.send({ type: "hello", src: name, kind: "phone" }); });
+  let mode = "tool", running = false;
+
+  const sock = K.connect({ src: name, role: "source" }, onEvent, (ok) => { $("conn").textContent = ok ? "connected" : "reconnecting…"; if (ok) sock.send({ type: "hello", src: name, kind: "phone" }); });
+
+  $("m-tool").addEventListener("click", () => setMode("tool"));
+  $("m-draw").addEventListener("click", () => setMode("draw"));
+  function setMode(m) {
+    mode = m;
+    $("m-tool").setAttribute("aria-pressed", m === "tool"); $("m-draw").setAttribute("aria-pressed", m === "draw");
+    $("draw").style.display = m === "draw" ? "block" : "none";
+    $("hint").textContent = m === "tool" ? "Hold the phone like the tool (a plane, a file, a brush) and make one stroke at a time across the table. Pause between strokes." : "Draw one stroke with your finger, like a brush stroke: start, glide, stop.";
+    if (m === "draw") sizeDraw();
+  }
+
+  // ---------- motion ----------
+  let batch = [], lastSend = 0, ema = 0, g = { x: 0, y: 0, z: 0 }, haveLinear = null, nEvents = 0, t0 = performance.now();
+  let audioVals = { lvl: 0, flat: 0 };
+  function onMotion(e) {
+    const t = performance.now();
+    let ax, ay, az;
+    if (e.acceleration && e.acceleration.x != null) { ax = e.acceleration.x; ay = e.acceleration.y; az = e.acceleration.z; haveLinear = true; }
+    else if (e.accelerationIncludingGravity && e.accelerationIncludingGravity.x != null) {
+      const a = e.accelerationIncludingGravity; const k = 0.08;
+      g.x += k * (a.x - g.x); g.y += k * (a.y - g.y); g.z += k * (a.z - g.z);
+      ax = a.x - g.x; ay = a.y - g.y; az = a.z - g.z; haveLinear = false;
+    } else return;
+    const r = e.rotationRate || {};
+    batch.push([t, ax || 0, ay || 0, az || 0, r.alpha || 0, r.beta || 0, r.gamma || 0, audioVals.lvl, audioVals.flat]);
+    nEvents++;
+    const mag = Math.sqrt(ax * ax + ay * ay + az * az);
+    ema += 0.15 * (mag - ema);
+    if (t - lastSend > 50) {
+      sock.send({ type: "samples", src: name, data: batch }); batch = []; lastSend = t;
+      sock.send({ type: "live", src: name, v: Math.round(ema * 100) / 100 });
+      $("meter").style.width = Math.min(100, ema * 25) + "%";
+    }
+  }
+
+  async function startMic() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      const ac = K.audio(); const src = ac.createMediaStreamSource(stream); const an = ac.createAnalyser(); an.fftSize = 1024; src.connect(an);
+      const buf = new Float32Array(an.fftSize), spec = new Float32Array(an.frequencyBinCount);
+      setInterval(() => {
+        an.getFloatTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
+        an.getFloatFrequencyData(spec); let lg = 0, ar = 0, n = 0;
+        for (let i = 4; i < spec.length; i++) { const p = Math.pow(10, spec[i] / 10) + 1e-12; lg += Math.log(p); ar += p; n++; }
+        audioVals = { lvl: Math.sqrt(s / buf.length), flat: Math.exp(lg / n) / (ar / n) };
+      }, 30);
+      return true;
+    } catch (e) { $("diag").textContent = "Microphone not available: " + e.message; return false; }
+  }
+
+  $("start").addEventListener("click", async () => {
+    K.audio();
+    if (running) { running = false; window.removeEventListener("devicemotion", onMotion); $("start").textContent = "Start"; return; }
+    if (mode === "tool") {
+      if (!window.isSecureContext) { $("diag").textContent = "Motion sensors need an https address. Open the https link from the dashboard’s Connect button, or use Draw mode."; return; }
+      if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function") {
+        try { const p = await DeviceMotionEvent.requestPermission(); if (p !== "granted") { $("diag").textContent = "Motion permission was refused. Allow motion access in the browser settings, then reload."; return; } }
+        catch (e) { $("diag").textContent = "Motion permission error: " + e.message; return; }
+      }
+      if ($("mic").checked) await startMic();
+      window.addEventListener("devicemotion", onMotion);
+      setTimeout(() => { $("diag").textContent = nEvents ? `Motion at ${Math.round(nEvents / ((performance.now() - t0) / 1000))} readings a second${haveLinear === false ? " (gravity removed in software)" : ""}.` : "No motion readings yet. Is this a phone, and is motion access allowed?"; }, 2500);
+    }
+    if (navigator.wakeLock) { try { await navigator.wakeLock.request("screen"); } catch (e) {} }
+    running = true; t0 = performance.now(); nEvents = 0; $("start").textContent = "Stop";
+  });
+
+  // ---------- draw mode ----------
+  const cv = $("draw"); let pts = null;
+  function sizeDraw() { const r = cv.getBoundingClientRect(); const d = window.devicePixelRatio || 1; cv.width = r.width * d; cv.height = r.height * d; const c = cv.getContext("2d"); c.setTransform(d, 0, 0, d, 0, 0); c.lineCap = "round"; }
+  cv.addEventListener("pointerdown", (e) => { cv.setPointerCapture(e.pointerId); pts = { t: [], x: [], y: [], p: [] }; const c = cv.getContext("2d"); c.clearRect(0, 0, cv.width, cv.height); add(e); });
+  cv.addEventListener("pointermove", (e) => { if (pts) add(e); });
+  const end = () => { if (!pts) return; const s = pts; pts = null; if (s.t.length > 3) sock.send({ type: "stroke", src: name, stype: "touch", t: s.t, x: s.x, y: s.y, p: s.p }); };
+  cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+  function add(e) {
+    const r = cv.getBoundingClientRect(); const c = cv.getContext("2d");
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    (evs.length ? evs : [e]).forEach((ev) => {
+      const x = ev.clientX - r.left, y = ev.clientY - r.top;
+      if (pts.x.length) { const px = pts.x[pts.x.length - 1] - r.left, py = pts.y[pts.y.length - 1] - r.top; c.strokeStyle = "#15191E"; c.lineWidth = 8 + 10 * (ev.pressure || 0.5); c.beginPath(); c.moveTo(px, py); c.lineTo(x, y); c.stroke(); }
+      pts.t.push(ev.timeStamp); pts.x.push(ev.clientX); pts.y.push(ev.clientY); pts.p.push(ev.pressure || 0);
+    });
+  }
+
+  // ---------- feedback from the server ----------
+  function onEvent(ev) {
+    if (ev.type !== "stroke" || !ev.stroke || ev.stroke.src !== name) return;
+    const box = $("result"), c = ev.coach, n = ev.named;
+    box.className = "result";
+    if (c && !c.error) {
+      if (c.test) { box.innerHTML = `<div class="w">${c.test.done ? (c.test.passed ? "合格" : "もう一度") : c.test.n + "/" + c.test.needed}</div><div class="big">${c.test.done ? (c.test.passed ? "Passed" : "Not yet") : "Test stroke recorded"}</div>`; if (c.test.done) box.className = "result " + (c.test.passed ? "pass" : "fail"); return; }
+      box.className = "result " + (c.passed ? "pass" : "fail");
+      const fb = c.passed ? "That’s it" : (c.feedback && c.level >= 2 ? c.feedback.en : "Again");
+      box.innerHTML = `<div class="w">${c.level >= 1 ? Math.round(c.score) : (c.passed ? "✓" : "·")}</div><div class="big">${K.esc(fb)}</div><div class="note">「${K.esc(c.word)}」 · help level ${c.level}</div>`;
+      if (c.passed && navigator.vibrate) navigator.vibrate([60, 40, 60]);
+      return;
+    }
+    box.innerHTML = n ? `<div class="note">Looks like</div><div class="w">${K.esc(n.word)}</div><div class="note">${Math.round(n.similarity * 100)}% match with the master</div>` : `<div class="big">Stroke recorded</div><div class="note">${(ev.stroke.features.duration || 0).toFixed(2)} s</div>`;
+  }
+  window.addEventListener("resize", () => { if (mode === "draw") sizeDraw(); });
+})();
+</script>
+</body>
+</html>

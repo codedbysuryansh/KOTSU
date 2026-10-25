@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KOTSU pitch</title>
+<link rel="stylesheet" href="/static/pitch.css">
+</head>
+<body class="on-ink">
+<nav id="tabs" aria-label="Pitch sections"></nav>
+<div id="stage">
+
+  <!-- 1 OPENING -->
+  <section class="scene ink" data-id="opening" data-tab="Opening">
+    <div class="open-grid">
+      <div class="title-block">
+        <div class="kotsu-glyph" lang="ja">コツ</div>
+        <h1>KOTSU</h1>
+        <p class="lead">We don’t translate the master’s words. We measure them.</p>
+      </div>
+      <div class="saying f">
+        <div class="vertical" lang="ja">技は見て盗め</div>
+        <div class="saying-text">
+          <p class="lead">“Steal the skill by watching.”</p>
+          <p class="romaji">waza wa mite nusume</p>
+          <p class="muted small">Every Japanese craftsperson knows it. The master shows, and says only a few words:</p>
+          <div class="three-words">
+            <div><span class="jp" lang="ja">グッ</span><span class="romaji">gut</span><span class="muted">a firm press</span></div>
+            <div><span class="jp" lang="ja">スーッ</span><span class="romaji">suuu</span><span class="muted">one smooth pull</span></div>
+            <div><span class="jp" lang="ja">ピタッ</span><span class="romaji">pitat</span><span class="muted">a dead stop</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="title-foot">Team Kotsu, Thapar Institute of Engineering and Technology. Thapar Japan Hackathon 2026, JETRO-PS-03.</p>
+  </section>
+
+  <!-- 2 PROBLEM -->
+  <section class="scene paper" data-id="problem" data-tab="Problem">
+    <div class="quote">
+      <div class="jp" lang="ja">「オノマトペを使わない」</div>
+      <p class="romaji">onomatope o tsukawanai</p>
+      <p class="en">“Don’t use onomatopoeia.” Japan’s advice to employers of foreign workers.</p>
+      <p class="src muted small">Tokyo Labour Bureau; Saga Prefecture employer seminar, 26 June 2026</p>
+    </div>
+    <div class="f struck-row"><span class="struck jp" lang="ja">「ここをグイっと持ち上げて」</span><span class="muted small">koko o guitto mochiagete, “lift this part with a yank”: a shop-floor line listed as one to avoid</span></div>
+    <div class="figs f">
+      <div class="fig"><b>70<small>%</small></b><p>of the decisions experts leave out when they explain a task</p></div>
+      <div class="fig"><b>59.5<small>%</small></b><p>of Japanese workplaces with training problems lack people who can teach</p></div>
+      <div class="fig"><b>5<small> yrs</small></b><p>not 20, for a Mazda takumi with motion capture. Copying the motion alone still failed.</p></div>
+    </div>
+    <p class="prob-foot f">April 2027: <span lang="ja">育成就労</span> (ikusei shuuroo) puts every foreign worker on a certified training plan with skill tests.</p>
+  </section>
+
+  <!-- 3 HOW IT LEARNS -->
+  <section class="scene paper" data-id="learns" data-tab="How it learns">
+    <h2>One correction is one lesson</h2>
+    <div class="lesson-grid">
+      <div class="sheet"><svg class="chart" id="lesson-chart"></svg></div>
+      <div class="lesson-side">
+        <p class="step f" data-f="1">The learner presses.</p>
+        <div class="f" data-f="2"><span class="bubble" id="lesson-text" lang="ja">ちがう、もっとグッと</span><p class="romaji" style="margin-top:2.2vh">chigau, motto gutto: “no, more グッ”</p><p class="step" style="margin-top:0.8vh">The master corrects him, then shows.</p></div>
+        <div class="f" data-f="3"><p class="meaning" id="lesson-meaning"></p><div class="chips" id="lesson-chips"></div></div>
+        <p class="no-cam f" data-f="4">No camera, no chatbot. His own corrections are the training data.</p>
+      </div>
+    </div>
+    <div class="steps" id="lesson-steps">
+      <div data-s="1"><span class="jp" lang="ja">聞く</span><span>Listen</span></div>
+      <div data-s="3"><span class="jp" lang="ja">測る</span><span>Measure</span></div>
+      <div data-s="5"><span class="jp" lang="ja">伝える</span><span>Coach</span></div>
+      <div data-s="6"><span class="jp" lang="ja">証明</span><span>Prove</span></div>
+    </div>
+  </section>
+
+  <!-- 4 REAL SKILLS -->
+  <section class="scene ink" data-id="skills" data-tab="Real skills">
+    <h2>Real skills, real words</h2>
+    <div class="skill-list">
+      <span class="jp" lang="ja">「スーッと引く」</span><p><span class="romaji">suutto hiku</span><b>Planing wood.</b> One smooth, even pull.</p>
+      <span class="jp" lang="ja">「カチッとなるまで」</span><p><span class="romaji">kachitto naru made</span><b>Seating a connector.</b> Push until it clicks.</p>
+      <span class="jp" lang="ja">「最後にグッと」</span><p><span class="romaji">saigo ni gutto</span><b>Tightening a bolt.</b> One firm push at the end.</p>
+      <span class="jp" lang="ja">「ジワッと押し込む」</span><p><span class="romaji">jiwatto oshikomu</span><b>Pressing in a bearing.</b> Build the force slowly.</p>
+      <span class="jp" lang="ja">「とめ・はね・はらい」</span><p><span class="romaji">tome, hane, harai</span><b>Brush strokes.</b> Stop, flick, sweep.</p>
+    </div>
+    <p class="stand-in f">On stage, the trackpad stands in for the tool. In a workshop, a phone strapped to the tool feeds the same software.</p>
+    <button class="clip-btn" id="clip-btn" type="button" hidden>Play this morning’s workshop clip</button>
+    <div id="clip-wrap"><video id="clip-video" controls playsinline></video></div>
+  </section>
+
+  <!-- 5 ARCHITECTURE -->
+  <section class="scene paper" data-id="arch" data-tab="Architecture">
+    <h2>How it is built</h2>
+    <div class="arch-wrap"><svg class="arch" id="arch" viewBox="0 0 1600 690" role="img" aria-label="KOTSU architecture: inputs, the KOTSU server, and what it produces"></svg></div>
+    <div class="num-strip">
+      <div><b>13</b><span>numbers measured per stroke</span></div>
+      <div><b>15</b><span>craft words built in, new ones found by ear</span></div>
+      <div><b>4</b><span>lessons to learn a word</span></div>
+      <div><b>0</b><span>new hardware</span></div>
+      <div><b>10</b><span>automated tests pass</span></div>
+    </div>
+  </section>
+
+  <!-- 6 LIVE -->
+  <section class="scene ink" data-id="live" data-tab="Live">
+    <div class="live-grid">
+      <div class="press-col" id="press-col">
+        <div id="gu" lang="ja">グッ</div>
+        <p class="lead">Press the trackpad, the way you mean <span class="jp" lang="ja">グッ</span>.</p>
+        <p class="romaji">gut: one firm press</p>
+        <p class="muted small" id="live-src">Waiting for a press from the trackpad station.</p>
+      </div>
+      <div class="live-right">
+        <div class="sheet"><svg class="chart" id="live-chart"></svg></div>
+        <div class="verdict" id="verdict">
+          <h3 class="muted" id="verdict-h">Whose <span class="jp" lang="ja">グッ</span> is yours closest to?</h3>
+          <div class="bars" id="verdict-bars"></div>
+          <p class="feat-line" id="verdict-feats"></p>
+          <div class="op-row" style="margin-top:1.6vh"><button class="op-btn" id="btn-keep" type="button" disabled>Keep these presses as a new master</button><span class="op-note" id="keep-note"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 PROOF -->
+  <section class="scene paper" data-id="proof" data-tab="Proof">
+    <h2>Same word, three hands</h2>
+    <div class="hands-grid">
+      <div class="sheet"><svg class="chart" id="hands-chart"></svg></div>
+      <div class="side-col">
+        <div class="big-claim f" data-f="1"><b id="who-num">7 of 8</b><p id="who-text">times KOTSU named whose グッ it was. Guessing: 1 in 3.</p></div>
+        <div class="big-claim f small-claim" data-f="2"><b id="rec-num">8 of 8</b><p id="rec-text">held-out demos named correctly, グッ or ジワッ</p></div>
+        <p class="muted small" id="hands-foot">Our captures, 25 Oct 2026. Three of us in the master’s role.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 COACHING -->
+  <section class="scene paper" data-id="coaching" data-tab="Coaching">
+    <h2 id="replay-title">This morning: a learner on Master A’s グッ</h2>
+    <div class="replay-grid">
+      <div class="sheet"><svg class="chart" id="replay-chart"></svg></div>
+      <div class="side-col">
+        <div class="tries" id="tries"></div>
+        <div class="passport f" id="passport-card" data-f="9">
+          <h4>Skill passport</h4>
+          <dl id="passport-dl"></dl>
+          <div class="stamp" lang="ja">合格</div>
+        </div>
+        <p class="muted small" id="pilot-line"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 KNACK GRAPH -->
+  <section class="scene paper" data-id="graph" data-tab="Knack graph">
+    <h2>KOTSU’s memory: who taught what, and who learned it</h2>
+    <iframe id="graph-frame" title="Knack graph" loading="lazy"></iframe>
+  </section>
+
+  <!-- 10 BUSINESS -->
+  <section class="scene ink" data-id="business" data-tab="Business">
+    <h2>Who pays, and why now</h2>
+    <div class="figs">
+      <div class="fig"><b>¥30,000</b><p>per site per month, plus ¥5,000 per skill passport</p></div>
+      <div class="fig"><b>45–75<small>%</small></b><p>of an SME’s training cost covered by MHLW’s training subsidy, <span lang="ja">人材開発支援助成金</span></p></div>
+      <div class="fig"><b>30<small>%</small></b><p>of every fee goes to the master whose words trained the learner</p></div>
+    </div>
+    <div class="buyer-grid">
+      <div><b>Host employers in Japan</b><p><span lang="ja">育成就労</span> training plans from April 2027</p></div>
+      <div><b>Japanese firms in India</b><p>81.5% plan to expand; 35.6% say hiring got harder</p></div>
+      <div><b>Pre-departure academies</b><p>proof of skill that Japanese employers trust</p></div>
+    </div>
+    <p class="muted small">Prices are our hypotheses. Subsidy eligibility is decided case by case.</p>
+  </section>
+
+  <!-- 11 IDEAS -->
+  <section class="scene ink" data-id="ideas" data-tab="Ideas">
+    <h2>What only KOTSU does, and what comes next</h2>
+    <div class="idea-grid">
+      <div class="idea"><b class="jp" lang="ja">グッ×3</b><span class="romaji">gut, three ways</span><p>One dictionary per master. The same word keeps each master’s meaning.</p></div>
+      <div class="idea"><b>0 h</b><p>Extra time for the master. KOTSU learns from corrections he already gives.</p></div>
+      <div class="idea"><b class="jp" lang="ja">はい／いいえ</b><span class="romaji">hai / iie: yes / no</span><p>Near-miss questions: one word from the master sharpens the edge of his range.</p></div>
+      <div class="idea"><b class="jp" lang="ja">合格</b><span class="romaji">gookaku: passed</span><p>A skill passport: who taught, the stroke, the score, a check code.</p></div>
+      <div class="idea"><b>30%</b><p>Royalty to the master, then to his heirs or craft association: a pension from knowledge.</p></div>
+      <div class="idea"><b>244</b><p>Traditional crafts. Each master’s dictionary becomes a living archive of how the craft is taught.</p></div>
+      <div class="idea"><b class="jp" lang="ja">動画</b><span class="romaji">dooga: video</span><p>Old training videos: corrections in their transcripts become lessons.</p></div>
+      <div class="idea"><b class="jp" lang="ja">ロボット</b><span class="romaji">robotto: robot</span><p>A measured グッ is a force-and-timing target a robot arm can follow.</p></div>
+    </div>
+  </section>
+
+  <!-- 12 CLOSE -->
+  <section class="scene ink" data-id="close" data-tab="Close">
+    <p class="jp small-say" lang="ja">「技は見て盗め」</p>
+    <p class="romaji">waza wa mite nusume, “steal the skill by watching”</p>
+    <p class="lead">was the only way while a master’s words could not travel. Now they can.</p>
+    <p class="final">With KOTSU, <span class="jp" lang="ja">グッ</span> keeps teaching.</p>
+    <p class="muted small">Next: Japan’s 244 traditional crafts, where workers over 70 outnumber those in their twenties three to one.</p>
+    <p class="thanks" lang="ja">ありがとうございました</p>
+    <p class="romaji">arigatoo gozaimashita</p>
+  </section>
+
+  <!-- APPENDIX -->
+  <section class="scene ink appx" data-id="ai" data-tab="AI" data-appx="1">
+    <h2>Where the AI is, and why the core is not a chatbot</h2>
+    <div class="ai-grid">
+      <div class="ai-row"><b>Speech AI</b><p>Google’s Japanese speech recognition, inside Chrome, hears the master’s correction.</p></div>
+      <div class="ai-row"><b>Machine learning, one model per master</b><p>His demos are right examples, the tries he corrected are wrong ones. KOTSU learns his own range for each word.</p></div>
+      <div class="ai-row"><b>Active learning</b><p>Unsure where his range ends, it makes a borderline press and asks him <span class="jp" lang="ja">はい</span> or <span class="jp" lang="ja">いいえ</span> (hai / iie: yes / no).</p></div>
+      <div class="ai-row"><b id="ai-who">7 of 8</b><p id="ai-who-text">presses named to the right master with each one hidden first. Guessing: 1 in 3.</p></div>
+    </div>
+    <div class="ai-contrast">
+      <p class="lead">An LLM learns from text. The knack was never written down.</p>
+      <p class="muted small">LLMs come next, around the core: finding corrections in hours of recorded training, and writing the feedback in each learner’s own language.</p>
+    </div>
+  </section>
+
+  <section class="scene paper appx" data-id="ps03" data-tab="PS-03" data-appx="1">
+    <h2>What PS-03 asks, and where KOTSU stands</h2>
+    <table class="cover-table">
+      <tr><th>PS-03 asks</th><th>KOTSU today</th><th>Still to prove</th></tr>
+      <tr><td>Digitise tacit skill</td><td>Each correction becomes a lesson; each word becomes a master’s measured range</td><td>Real tools and sensors in a workshop</td></tr>
+      <tr><td>Make it teachable</td><td>Coaching with the master’s word, feedback that fades, an unaided test</td><td>A larger pilot than our 6 sessions</td></tr>
+      <tr><td>Reach younger generations and global talent</td><td>Feedback in plain English; the master’s own word and voice kept</td><td>More learner languages</td></tr>
+      <tr><td>Keep it after the master retires</td><td>Dictionaries, passports and the knack graph stay; royalties continue</td><td>Consent and royalty contracts</td></tr>
+      <tr><td>Scale</td><td>A browser link and a laptop; no new hardware</td><td>Speech needs internet; a loud factory needs word buttons</td></tr>
+    </table>
+    <p class="muted small" style="margin-top:2vh">KOTSU covers the feel of a skill: force, speed and timing. Judging by eye, procedures and safety steps stay with the master.</p>
+  </section>
+
+  <section class="scene paper appx" data-id="risks" data-tab="Risks" data-appx="1">
+    <h2>Risks we planned for, and why a copy does not win</h2>
+    <div class="two-col">
+      <div><h3>Risks</h3><ul>
+        <li><b>Masters will not join.</b> No extra time, his name on every passport, a royalty.</li>
+        <li><b>A wrong nuance.</b> Meanings are measured per master, never imposed.</li>
+        <li><b>Privacy.</b> Written consent; the master owns and can delete his dictionary; data stays on the employer’s laptop.</li>
+        <li><b>Speech fails in noise.</b> Word buttons, phone taps and transcript mining work without it.</li>
+        <li><b>Safety steps.</b> KOTSU coaches feel only; the master signs off.</li>
+      </ul></div>
+      <div><h3>Why a copy does not win</h3><ul>
+        <li><b>The data is the product.</b> Code copies in a month; a master’s grounded words do not.</li>
+        <li><b>Royalties keep masters.</b> A paid master has no reason to move.</li>
+        <li><b>Records build up</b> at every employer and academy.</li>
+        <li><b>Partner, not rival:</b> the word layer on top of NEC’s or Mazda’s motion data.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section class="scene paper appx" data-id="sources" data-tab="Sources" data-appx="1">
+    <h2>Sources</h2>
+    <ul class="src-list">
+      <li>Tokyo Labour Bureau, カインドコミュニケーション guidance: 「オノマトペ（擬音語・擬態語）を使わない」</li>
+      <li>Saga Prefecture employer seminar on foreign workers, 26 June 2026: 「ここをグイっと持ち上げて」 listed as a phrase to avoid</li>
+      <li>MHLW, FY2025 Basic Survey on Vocational Ability Development, 31 July 2026: 59.5% lack people who can teach</li>
+      <li>Yates, Feldon &amp; Clark (2011): experts omit about 70% of decisions when describing tasks</li>
+      <li>Mazda (2025): takumi motion capture, about 5 years instead of 20; motion alone did not transfer the skill</li>
+      <li>Irie et al. (2021), Frontiers in Psychology: onomatopoeia conveys force, speed and timing in motion teaching</li>
+      <li>Imai et al. (2008), Cognition: English speakers matched Japanese mimetics to actions 64% of the time against 50% chance</li>
+      <li>JETRO FY2025 survey of Japanese affiliates: in India 81.5% plan to expand, 35.6% say hiring got harder</li>
+      <li>Immigration Services Agency: 育成就労 from April 2027</li>
+      <li>METI Traditional Crafts Industry Office: 244 designated crafts, about 48,000 workers</li>
+      <li>MHLW 人材開発支援助成金: 45% and 75% of SME training costs, July 2026</li>
+      <li>Prior art: Yamaha Motor WO2017099214A1; RT-H, Belkhale et al. (2024)</li>
+      <li>Our own data: Team Kotsu captures, 25 Oct 2026, read live from this laptop</li>
+    </ul>
+  </section>
+</div>
+
+<footer id="chrome"><span class="mark"><span id="live-dot" title="connection to the KOTSU server"></span>KOTSU <span lang="ja">コツ</span></span><span id="count"></span></footer>
+<div id="help" hidden>
+  <b>Keys</b><br>
+  <kbd>→</kbd> or <kbd>Space</kbd> next &nbsp; <kbd>←</kbd> back &nbsp; <kbd>L</kbd> live &nbsp; <kbd>G</kbd> knack graph &nbsp; <kbd>A</kbd> AI<br>
+  <kbd>1</kbd>–<kbd>9</kbd> jump to a tab &nbsp; <kbd>F</kbd> full screen &nbsp; <kbd>R</kbd> reload data &nbsp; <kbd>?</kbd> close this
+</div>
+<script src="/static/common.js"></script>
+<script src="/static/pitch.js"></script>
+</body>
+</html>

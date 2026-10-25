@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KOTSU</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><b>KOTSU</b><span>コツ</span><small>the master’s words, measured</small></div>
+  <label>Master<select id="sel-master"></select></label>
+  <label>Learner<select id="sel-learner"></select></label>
+  <div class="spacer"></div>
+  <div class="dots" id="sources" aria-label="Connected devices"></div>
+  <a class="btn" href="/pitch" target="_blank" rel="noopener" style="text-decoration:none">Pitch screen</a>
+  <button class="btn" id="btn-connect" type="button">Connect a phone</button>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" data-view="capture" aria-selected="true">Listen <small>聞く</small></button>
+  <button role="tab" data-view="dictionary">Dictionary <small>測る</small></button>
+  <button role="tab" data-view="graph">Knack graph <small>コツの地図</small></button>
+  <button role="tab" data-view="coach">Coach <small>伝える</small></button>
+  <button role="tab" data-view="passport">Passport <small>証明</small></button>
+  <button role="tab" data-view="results">Results <small>結果</small></button>
+  <span class="tabsep" aria-hidden="true"></span>
+  <button role="tab" data-view="ask">Ask <small>確かめる</small></button>
+  <button role="tab" data-view="drill">Drill <small>見分ける</small></button>
+  <button role="tab" data-view="mine">Transcripts <small>掘る</small></button>
+  <button role="tab" data-view="robot">Robot <small>ロボット</small></button>
+  <button role="tab" data-view="setup">Setup</button>
+</nav>
+
+<main>
+  <!-- LISTEN -->
+  <section class="view" id="view-capture">
+    <div class="banner" id="mode-banner" hidden><span id="mode-banner-text"></span><button class="btn" id="btn-to-listen" type="button">Switch to listening</button></div>
+    <div class="grid2">
+      <div class="card">
+        <div class="row"><h2>Live strokes</h2><span class="muted" id="cap-mode-note">Master and apprentice at work. KOTSU listens for corrections.</span></div>
+        <canvas class="plot tall" id="cap-plot"></canvas>
+        <div class="row named" id="cap-named"></div>
+        <h3>Laptop stroke pad (drag with the trackpad or mouse)</h3>
+        <div class="pad" id="cap-pad"><span>Drag here to make a stroke, like drawing a plane or a brush across wood</span></div>
+      </div>
+      <div class="card">
+        <h2>What the master says</h2>
+        <div class="row">
+          <button class="btn primary" id="btn-listen" type="button">Start listening (Japanese)</button>
+          <span class="status" id="listen-status">Microphone off</span>
+        </div>
+        <div class="speech" id="speech"><span class="muted">Say a correction like 「ちがう、もっとスーッと」, a demo like 「グッと」, or praise like 「そうそう」.</span></div>
+        <div class="status" id="speech-action"></div>
+        <h3>Or tap what the master said</h3>
+        <div class="intent" id="intent-pick" role="group" aria-label="Kind of remark">
+          <button type="button" data-intent="correction" aria-pressed="true">ちがう、もっと… (correction)</button>
+          <button type="button" data-intent="demo" aria-pressed="false">…と (demo)</button>
+          <button type="button" data-intent="bad" aria-pressed="false">ダメな例 (wrong way)</button>
+          <button type="button" data-intent="ok" aria-pressed="false">そうそう！ (that’s it)</button>
+        </div>
+        <div class="wordgrid" id="word-buttons"></div>
+        <div class="row"><input id="new-word" placeholder="Another word, e.g. ズバッ" style="flex:1;min-width:0;padding:8px;border:1px solid var(--rule);border-radius:8px"><button class="btn" id="btn-new-word" type="button">Add</button></div>
+        <h3>Lessons caught</h3>
+        <div class="feed" id="lessons"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DICTIONARY -->
+  <section class="view" id="view-dictionary" hidden>
+    <div class="card" id="cmp-card" hidden style="margin-bottom:16px">
+      <div class="row"><h2 style="margin:0">Same word, different masters</h2><select id="cmp-word" aria-label="Word to compare"></select><button class="btn" id="cmp-hear" type="button">▶ Hear each master</button></div>
+      <p class="muted" style="margin:0">Each master’s own stroke for the word, with that master’s range shaded. A fixed dictionary would teach one of them wrong.</p>
+      <canvas class="plot tall" id="cmp-plot"></canvas>
+      <div class="grid2" id="cmp-meanings"></div>
+      <div class="status" id="cmp-who"></div>
+    </div>
+    <div class="row" style="margin-bottom:12px"><h2 style="margin:0">Dictionary of the hands</h2><span class="muted" id="dict-note">Each word, as this master’s hands mean it. The shaded band is the master’s own range.</span></div>
+    <div class="grid3" id="dict"></div>
+  </section>
+
+  <!-- KNACK GRAPH -->
+  <section class="view" id="view-graph" hidden>
+    <div class="kg-grid">
+      <div class="card">
+        <div class="row"><h2 style="margin:0">Knack graph</h2><span class="muted">Who taught which word, and what each word means in measured feel. Click any circle.</span><span class="spacer" style="flex:1"></span><button class="btn" id="btn-kg-trace" type="button">▶ Trace a lesson</button></div>
+        <div class="kg-wrap"><svg id="kg" role="img" aria-label="Knack graph of masters, words, measured features and learners"></svg></div>
+        <div class="kg-legend">
+          <span><i class="lg more"></i>more than the master’s usual</span>
+          <span><i class="lg less"></i>less than the master’s usual</span>
+          <span><b>守</b> practising with help</span><span><b>破</b> reached the master’s range</span><span><b>離</b> passed alone</span>
+        </div>
+      </div>
+      <div class="card" id="kg-detail"><span class="muted">Click a circle to see its details.</span></div>
+    </div>
+  </section>
+
+  <!-- ASK -->
+  <section class="view" id="view-ask" hidden>
+    <div class="grid2">
+      <div class="card">
+        <div class="row"><h2>Ask the master</h2><select id="ask-word"></select><button class="btn primary" id="btn-ask" type="button">Ask a question</button></div>
+        <p class="muted" style="margin:0">KOTSU changes one thing about the master’s own stroke and asks if it still counts. The master judges; they never have to explain.</p>
+        <div class="qtext" id="ask-q"></div>
+        <canvas class="plot tall" id="ask-plot"></canvas>
+        <div class="row">
+          <button class="btn" id="ask-play-m" type="button">▶ Hear the master’s stroke</button>
+          <button class="btn" id="ask-play-q" type="button">▶ Hear this version</button>
+        </div>
+        <div class="row">
+          <button class="btn big on" id="ask-yes" type="button" disabled>はい  Yes</button>
+          <button class="btn big warn" id="ask-no" type="button" disabled>いいえ  No</button>
+        </div>
+        <div class="status" id="ask-status"></div>
+      </div>
+      <div class="card">
+        <h2>What the answers changed</h2>
+        <div id="ask-bands" class="bars"></div>
+        <h3>Answers so far</h3>
+        <table class="mini" id="ask-log"><thead><tr><th>Changed</th><th>Value</th><th>Master said</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- COACH -->
+  <section class="view" id="view-coach" hidden>
+    <div class="grid2">
+      <div class="card">
+        <div class="row">
+          <select id="coach-word" aria-label="Word to practise"></select>
+          <select id="coach-cond" aria-label="Feedback condition"><option value="kotsu">KOTSU feedback</option><option value="word_only">Word only (control)</option></select>
+          <button class="btn primary" id="btn-coach" type="button">Start coaching</button>
+          <button class="btn" id="btn-test" type="button" disabled>Start the test</button>
+        </div>
+        <div class="row" style="align-items:flex-end;gap:18px">
+          <div class="wordbig" id="coach-w">—</div>
+          <div><div class="gloss" id="coach-gloss"></div><div class="muted" id="coach-master"></div></div>
+          <div class="spacer" style="flex:1"></div>
+          <button class="btn" id="coach-voice" type="button">▶ Master’s voice</button>
+          <button class="btn" id="coach-hear" type="button">▶ Hear the stroke</button>
+        </div>
+        <canvas class="plot tall" id="coach-plot"></canvas>
+        <h3>Laptop stroke pad</h3>
+        <div class="pad" id="coach-pad"><span>Drag here, or use the phone or trackpad station</span></div>
+      </div>
+      <div class="card">
+        <div class="row"><div class="score" id="coach-score">–</div><div class="levels" id="coach-levels" title="Help level"></div></div>
+        <div class="feedback" id="coach-feedback"><span class="muted">Choose a word and press Start coaching.</span></div>
+        <div class="bars" id="coach-bars"></div>
+        <div class="status" id="coach-status"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DRILL -->
+  <section class="view" id="view-drill" hidden>
+    <div class="card">
+      <div class="row"><h2>Train the ear and eye</h2><select id="drill-word"></select><button class="btn primary" id="btn-drill" type="button">Next pair</button><span class="status" id="drill-stats"></span></div>
+      <p class="muted" style="margin:0">One stroke is the master’s word, one is a near-miss. Differences start exaggerated and shrink as you get them right, the way Japanese learners are taught to hear English r and l.</p>
+      <div class="qtext" id="drill-q"></div>
+      <div class="pair">
+        <div class="card"><div class="row"><b style="font-size:28px">A</b><button class="btn" id="drill-play-a" type="button">▶ Hear A</button><button class="btn big" id="drill-pick-a" type="button" disabled>This one</button></div><canvas class="plot" id="drill-a"></canvas></div>
+        <div class="card"><div class="row"><b style="font-size:28px">B</b><button class="btn" id="drill-play-b" type="button">▶ Hear B</button><button class="btn big" id="drill-pick-b" type="button" disabled>This one</button></div><canvas class="plot" id="drill-b"></canvas></div>
+      </div>
+      <div class="feedback" id="drill-result"></div>
+    </div>
+  </section>
+
+  <!-- PASSPORT -->
+  <section class="view" id="view-passport" hidden>
+    <div class="row" style="margin-bottom:12px"><h2 style="margin:0">Skill passport</h2><button class="btn" id="btn-pp-refresh" type="button">Refresh</button></div>
+    <div id="passport"></div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="view" id="view-results" hidden>
+    <div class="row" style="margin-bottom:12px"><h2 style="margin:0">Results</h2><button class="btn" id="btn-res-refresh" type="button">Refresh</button><span class="muted" id="res-note"></span></div>
+    <div class="grid3">
+      <div class="card"><h3 style="margin-top:0">Can KOTSU tell the master’s words apart?</h3><div id="res-rec"></div></div>
+      <div class="card"><h3 style="margin-top:0">Can it tell whose word it is?</h3><div id="res-who"></div></div>
+      <div class="card"><h3 style="margin-top:0">Tries to reach the master’s range</h3><div id="res-pilot"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3 style="margin-top:0">Captured so far</h3><div class="chips" id="res-counts"></div></div>
+  </section>
+
+  <!-- TRANSCRIPTS -->
+  <section class="view" id="view-mine" hidden>
+    <div class="grid2">
+      <div class="card">
+        <h2>Find lessons in a real teaching transcript</h2>
+        <p class="muted" style="margin:0">Paste the transcript of an OJT video or a recorded session: YouTube’s “Show transcript” text, an .srt or a .vtt file. KOTSU finds each correction with a craft word and marks the clips worth capturing.</p>
+        <label for="mine-text" class="muted" style="font-size:13px">Transcript</label>
+        <textarea id="mine-text" rows="16" style="width:100%;padding:10px;border:1px solid var(--rule);border-radius:8px;font:inherit;font-size:15px"></textarea>
+        <div class="row"><button class="btn primary" id="btn-mine" type="button">Find the lessons</button><label class="btn" for="mine-file">Open a file…</label><input type="file" id="mine-file" accept=".txt,.srt,.vtt,text/plain" hidden><span class="status" id="mine-status"></span></div>
+      </div>
+      <div class="card">
+        <h2>Lessons found</h2>
+        <div class="chips" id="mine-summary"></div>
+        <div style="max-height:62vh;overflow:auto"><table class="mini" id="mine-table"><thead><tr><th>Time</th><th>What was said</th><th>Word</th><th>Kind</th><th>Clips to cut</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROBOT -->
+  <section class="view" id="view-robot" hidden>
+    <div class="card">
+      <div class="row"><h2>Robot replay (simulation)</h2><select id="robot-word"></select><button class="btn primary" id="btn-robot" type="button">▶ Replay this word</button></div>
+      <p class="muted" style="margin:0">A grounded word is a command with force and timing. This simulated two-joint arm replays the master’s own profile for the word.</p>
+      <canvas id="robot-canvas" style="width:100%;height:420px;background:#FBFBF9;border:1px solid var(--rule);border-radius:8px"></canvas>
+      <div class="status" id="robot-status"></div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section class="view" id="view-setup" hidden>
+    <div class="grid2">
+      <div class="card">
+        <h2>Connect devices</h2>
+        <div id="setup-urls"></div>
+        <div class="row"><input id="public-url" placeholder="https://….trycloudflare.com" style="flex:1;min-width:0;padding:8px;border:1px solid var(--rule);border-radius:8px"><button class="btn" id="btn-public" type="button">Use this public address</button></div>
+        <p class="muted" style="margin:0">Phones need an https address for motion sensors. Start the tunnel with <span class="kbd">python run.py --tunnel</span>, or paste its address here.</p>
+      </div>
+      <div class="card">
+        <h2>People</h2>
+        <div class="row"><input id="in-master" placeholder="Master’s name" style="flex:1;min-width:0;padding:8px;border:1px solid var(--rule);border-radius:8px"><button class="btn" id="btn-add-master" type="button">Add master</button></div>
+        <div class="row"><select id="rename-master" aria-label="Master to rename"></select><input id="rename-to" placeholder="New name" style="flex:1;min-width:0;padding:8px;border:1px solid var(--rule);border-radius:8px"><button class="btn" id="btn-rename-master" type="button">Rename master</button></div>
+        <div class="row"><select id="rename-learner" aria-label="Learner to rename"></select><input id="rename-learner-to" placeholder="New name" style="flex:1;min-width:0;padding:8px;border:1px solid var(--rule);border-radius:8px"><button class="btn" id="btn-rename-learner" type="button">Rename learner</button></div>
+        <div class="row"><input id="in-learner" placeholder="Learner’s name" style="flex:1;min-width:0;padding:8px;border:1px solid var(--rule);border-radius:8px"><button class="btn" id="btn-add-learner" type="button">Add learner</button></div>
+        <h2>Data</h2>
+        <div class="row"><button class="btn" id="btn-seed" type="button">Load sample data (synthetic)</button><button class="btn warn" id="btn-reset" type="button">Reset everything…</button></div>
+        <p class="muted" style="margin:0">Sample data is a synthetic master for rehearsal. Never present it as a real person.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="card">
+    <div class="row"><h2 style="flex:1">Connect a phone</h2><button class="btn" id="modal-close" type="button">Close</button></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script src="/static/common.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

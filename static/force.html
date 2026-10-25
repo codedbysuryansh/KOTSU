@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KOTSU pressure station</title>
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  body { background: #15191E; color: #F4F5F2; }
+  .wrap { padding: 20px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+  #pad { height: 62vh; border-radius: 18px; background: radial-gradient(circle at 50% 50%, #2D3542, #1D232C); border: 2px solid #3A424E; display: grid; place-items: center; user-select: none; -webkit-user-select: none; cursor: pointer; position: relative; overflow: hidden; }
+  #pad .ring { position: absolute; border-radius: 50%; border: 6px solid #F2A36B; width: 60px; height: 60px; transition: width 40ms linear, height 40ms linear; }
+  #pad .lbl { position: relative; text-align: center; font-size: 22px; color: #D6DAE0; max-width: 80%; }
+  .panel { background: #20262F; border: 1px solid #3A424E; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .val { font-size: 72px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .w { font-size: 70px; font-weight: 800; line-height: 1; }
+  .note { color: #B8BEC6; font-size: 15px; }
+  canvas.plot { background: #FBFBF9; }
+  .result.pass { color: #8FE3B5; } .result.fail { color: #FF9B8F; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <div class="row" style="justify-content:space-between"><b style="font-size:22px">KOTSU コツ · pressure station</b><span class="status" id="conn" style="color:#B8BEC6">connecting…</span></div>
+    <div id="pad" aria-label="Press the trackpad here"><div class="ring" id="ring"></div><div class="lbl" id="lbl">Rest a finger here and press the trackpad.<br>Say your word as you press: 「グッと」, 「ジワッと」…</div></div>
+    <div class="note" id="support"></div>
+  </div>
+  <div class="panel">
+    <div class="note">Pressure now</div>
+    <div class="val" id="val">0.00</div>
+    <canvas class="plot" id="plot"></canvas>
+    <div class="result" id="result"><div class="note">Each press is sent to KOTSU as one stroke.</div></div>
+  </div>
+</div>
+<script src="/static/common.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const name = "force-" + (navigator.platform || "mac").replace(/\W/g, "").slice(0, 6).toLowerCase();
+  const sock = K.connect({ src: name, role: "source" }, onEvent, (ok) => { $("conn").textContent = ok ? "connected as " + name : "reconnecting…"; if (ok) sock.send({ type: "hello", src: name, kind: "force" }); });
+  const pad = $("pad");
+  const hasForce = "WEBKIT_FORCE_AT_MOUSE_DOWN" in MouseEvent || "webkitForce" in MouseEvent.prototype;
+  $("support").textContent = hasForce ? "Force Touch detected: pressure is read from the trackpad." : "This browser does not report trackpad pressure. Open this page in Safari on a MacBook with a Force Touch trackpad. As a fallback, the press uses pointer pressure or press time.";
+  let pressing = false, force = 0, rec = null, raf = 0, lastLive = 0;
+  pad.addEventListener("webkitmouseforcewillbegin", (e) => e.preventDefault());
+  pad.addEventListener("webkitmouseforcedown", (e) => e.preventDefault());
+  pad.addEventListener("webkitmouseforcechanged", (e) => { force = e.webkitForce || 0; });
+  pad.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); pressing = true; rec = { t: [], f: [] };
+    force = hasForce ? (e.webkitForce || 1) : (e.pressure && e.pressure !== 0.5 ? e.pressure * 3 : 1);
+    pad.setPointerCapture && pad.setPointerCapture(e.pointerId);
+    const t0 = performance.now();
+    const loop = (now) => {
+      if (!pressing) return;
+      rec.t.push(now); rec.f.push(force);
+      draw(force);
+      if (now - lastLive > 40) { sock.send({ type: "live", src: name, v: Math.round(force * 100) / 100 }); lastLive = now; }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+  });
+  pad.addEventListener("pointermove", (e) => { if (pressing && !hasForce && e.pressure && e.pressure !== 0.5) force = e.pressure * 3; });
+  const up = () => {
+    if (!pressing) return; pressing = false; cancelAnimationFrame(raf);
+    rec.t.push(performance.now()); rec.f.push(0);
+    draw(0);
+    if (rec.t.length > 4) {
+      sock.send({ type: "stroke", src: name, stype: "force", t: rec.t, f: rec.f });
+      const fs = 60; K.plot($("plot"), [{ y: rec.f, fs: rec.t.length / ((rec.t[rec.t.length - 1] - rec.t[0]) / 1000), color: "#D9480F", width: 3, label: "this press" }], {});
+    }
+  };
+  pad.addEventListener("pointerup", up); pad.addEventListener("pointercancel", up); window.addEventListener("blur", up);
+  function draw(f) { $("val").textContent = f.toFixed(2); const s = 60 + f * 120; $("ring").style.width = s + "px"; $("ring").style.height = s + "px"; }
+
+  function onEvent(ev) {
+    if (ev.type !== "stroke" || !ev.stroke || ev.stroke.src !== name) return;
+    const box = $("result"), c = ev.coach, n = ev.named;
+    if (c && !c.error) {
+      if (c.test) { box.className = "result"; box.innerHTML = `<div class="w">${c.test.done ? (c.test.passed ? "合格" : "もう一度") : c.test.n + "/" + c.test.needed}</div>`; return; }
+      box.className = "result " + (c.passed ? "pass" : "fail");
+      box.innerHTML = `<div class="w">${Math.round(c.score)}</div><div style="font-size:22px">${K.esc(c.passed ? "That’s it" : (c.feedback ? c.feedback.en : "Again"))}</div>`;
+      return;
+    }
+    box.className = "result";
+    box.innerHTML = n ? `<div class="note">Looks like</div><div class="w">${K.esc(n.word)}</div><div class="note">${Math.round(n.similarity * 100)}% match</div>` : `<div style="font-size:22px">Press recorded</div><div class="note">peak ${(ev.stroke.features.peak || 0).toFixed(2)} · rise ${(ev.stroke.features.rise || 0).toFixed(2)} s</div>`;
+  }
+})();
+</script>
+</body>
+</html>
